@@ -3,116 +3,176 @@ import java.util.*;
 
 class Huffman {
 
-    // TreeNode class
-    static class TreeNode implements Comparable<TreeNode> {
-        char ch;
+    static class Node {
+        char c;
         int freq;
-        TreeNode left, right;
+        Node left, right;
 
-        public TreeNode(char ch, int freq) {
-            this.ch = ch;
+        Node(char c, int freq) {
+            this.c = c;
             this.freq = freq;
         }
+    }
 
-        public int compareTo(TreeNode node) {
-            return freq - node.freq;
+    static class FreqComparator implements Comparator<Node> {
+        public int compare(Node a, Node b) {
+            return a.freq - b.freq;
         }
     }
 
-    // Store encodings in a map
-    static Map<Character, String> encodings = new HashMap<>();
-
-    // Encode text
-    static String encode(String text, TreeNode root) {
-        StringBuilder sb = new StringBuilder();
-        for (char c : text.toCharArray()) {
-            sb.append(encodings.get(c));
+    static void printCodes(Node root, String code, Map<Character, String> codes) {
+        if (root == null) {
+            return;
         }
-        return sb.toString();
+
+        if (root.left == null && root.right == null) {
+            codes.put(root.c, code);
+            return;
+        }
+
+        if (root.left != null) {
+            printCodes(root.left, code + "0", codes);
+        }
+
+        if (root.right != null) {
+            printCodes(root.right, code + "1", codes);
+        }
     }
 
-    // Decode text
-    static String decode(String encodedText, TreeNode root) {
-        StringBuilder sb = new StringBuilder();
-        TreeNode curr = root;
-        for (char c : encodedText.toCharArray()) {
-            curr = c == '0' ? curr.left : curr.right;
-            if (curr.left == null && curr.right == null) {
-                sb.append(curr.ch);
-                curr = root;
+    static Node buildTree(char[] charSet, int[] freq) {
+        int n = charSet.length;
+
+        Node[] nodes = new Node[n];
+        for (int i = 0; i < n; i++) {
+            nodes[i] = new Node(charSet[i], freq[i]);
+        }
+
+        Arrays.sort(nodes, new FreqComparator());
+
+        while (nodes.length > 1) {
+            Node x = nodes[0];
+            Node y = nodes[1];
+
+            Node f = new Node('\0', x.freq + y.freq);
+            f.left = x;
+            f.right = y;
+
+            nodes = Arrays.copyOfRange(nodes, 2, nodes.length);
+
+            int i = 0;
+            for (; i < nodes.length; i++) {
+                if (nodes[i].freq > f.freq)
+                    break;
             }
+            nodes = insert(nodes, i, f);
         }
-        return sb.toString();
+
+        return nodes[0];
     }
 
-    // Build Huffman tree
-    static TreeNode buildTree(int[] freqs) {
+    static Node[] insert(Node[] nodes, int i, Node x) {
+        int n = nodes.length;
+        Node[] temp = new Node[n + 1];
 
-        PriorityQueue<TreeNode> pq = new PriorityQueue<>();
-        for (int i = 0; i < freqs.length; i++) {
-            if (freqs[i] > 0) {
-                pq.add(new TreeNode((char)i, freqs[i]));
+        for (int j = 0; j < n + 1; j++) {
+            if (j < i)
+                temp[j] = nodes[j];
+            else if (j == i)
+                temp[j] = x;
+            else
+                temp[j] = nodes[j - 1];
+        }
+
+        return temp;
+    }
+
+    static String getCode(char c, Map<Character, String> codes) {
+        return codes.get(c);
+    }
+
+    static void decodeFile(String encodedText, Node root) {
+        StringBuilder decoded = new StringBuilder();
+        int index = 0;
+        while (index < encodedText.length()) {
+            Node current = root;
+            while (current.left != null && current.right != null) {
+                if (encodedText.charAt(index) == '0') {
+                    current = current.left;
+                } else {
+                    current = current.right;
+                }
+                index++;
             }
+            decoded.append(current.c);
         }
-
-        while (pq.size() > 1) {
-            TreeNode left = pq.poll();
-            TreeNode right = pq.poll();
-
-            TreeNode parent = new TreeNode('\0', left.freq + right.freq);
-            parent.left = left;
-            parent.right = right;
-            pq.add(parent);
-        }
-
-        storeCodes(pq.peek(), "");
-        return pq.peek();
-
+        System.out.println("Decoded text: " + decoded.toString());
     }
 
-    // Store codes in map
-    static void storeCodes(TreeNode root, String code) {
-        if (root == null) return;
-
-        if (root.ch != '\0') {
-            encodings.put(root.ch, code);
+    static void displayHuffmanTree(Node root, int level) {
+        if (root != null) {
+            displayHuffmanTree(root.right, level + 1);
+            for (int i = 0; i < level; i++) {
+                System.out.print("   ");
+            }
+            System.out.println(root.freq + " " + root.c);
+            displayHuffmanTree(root.left, level + 1);
         }
-
-        storeCodes(root.left, code + "0");
-        storeCodes(root.right, code + "1");
     }
 
     public static void main(String[] args) {
+        char[] charSet = {' ', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+                'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
 
-        int[] freqs = new int[128];
+        int[] freq = {186, 64, 13, 22, 32, 103, 21, 15, 47, 57, 1, 5, 32, 20,
+                57, 63, 15, 1, 48, 51, 80, 23, 8, 18, 1, 16, 1};
 
-        try {
-            File file = new File("data.txt");
-            Scanner sc = new Scanner(file);
-            while (sc.hasNextLine()) {
-                String line = sc.nextLine();
-                for (char c : line.toCharArray()) {
-                    freqs[c]++;
-                }
-            }
-        } catch (FileNotFoundException e) {
-            System.out.println("Couldn't find data.txt, using sample data");
-            // Sample data
-            freqs['A'] = 5;
-            freqs['B'] = 9;
-            freqs['C'] = 12;
-            freqs['D'] = 13;
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("Enter the character set size n:");
+        int n = scanner.nextInt();
+
+        char[] customCharSet = new char[n];
+        int[] customFreq = new int[n];
+
+        System.out.println("Enter " + n + " characters:");
+        for (int i = 0; i < n; i++) {
+            customCharSet[i] = scanner.next().charAt(0);
         }
 
-        TreeNode root = buildTree(freqs);
+        System.out.println("Enter " + n + " weights:");
+        for (int i = 0; i < n; i++) {
+            customFreq[i] = scanner.nextInt();
+        }
 
-        String sample = "BABAABA";
-        String encoded = encode(sample, root);
-        System.out.println("Encoded text: " + encoded);
+        Node root = buildTree(customCharSet, customFreq);
 
-        String decoded = decode(encoded, root);
-        System.out.println("Decoded text: " + decoded);
+        System.out.println("Huffman Tree:");
+        displayHuffmanTree(root, 0);
 
+        Map<Character, String> codes = new HashMap<>();
+        printCodes(root, "", codes);
+
+        System.out.println("\nHuffman Codes:");
+        for (Map.Entry<Character, String> entry : codes.entrySet()) {
+            System.out.println(entry.getKey() + ": " + entry.getValue());
+        }
+
+        System.out.println("\nEnter text to encode (type 'quit' to exit):");
+        String inputText = scanner.next();
+        while (!inputText.equals("quit")) {
+            StringBuilder encodedText = new StringBuilder();
+            for (char c : inputText.toCharArray()) {
+                encodedText.append(getCode(c, codes));
+            }
+            System.out.println("Encoded text: " + encodedText);
+
+            System.out.println("Decoding...");
+            decodeFile(encodedText.toString(), root);
+
+            System.out.println("\nEnter text to encode (type 'quit' to exit):");
+            inputText = scanner.next();
+        }
+
+        scanner.close();
     }
-
 }
