@@ -1,11 +1,11 @@
-Enter the character set size n:
+##Enter the character set size n:
 26
-Enter 26 characters:
+##Enter 26 characters:
 A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
-Enter 26 weights:
+##Enter 26 weights:
 64 13 22 32 103 21 15 47 57 1 5 32 20 57 63 15 1 48 51 80 23 8 18 1 16 1
 
-Huffman Tree:
+##Huffman Tree:
                  579 A
                    80 H
                 364 E
@@ -20,7 +20,7 @@ Huffman Tree:
             32
           186
 
-Huffman Codes:
+##Huffman Codes:
 A: 00
 B: 1101
 C: 11110
@@ -48,11 +48,11 @@ X: 111111111111
 Y: 1111111111110
 Z: 11111111111110
 
-Enter text to encode (type 'quit' to exit):
-HELLO
-Encoded text: 0101110111111111111010101101111110110
-Decoding...
-Decoded text: HELLO
+##Enter text to encode (type 'quit' to exit):
+##HELLO
+##Encoded text: 0101110111111111111010101101111110110
+##Decoding...
+##Decoded text: HELLO
 
-Enter text to encode (type 'quit' to exit):
-quit
+##Enter text to encode (type 'quit' to exit):
+##quit
